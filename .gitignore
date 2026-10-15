@@ -1,0 +1,6 @@
+# 3D models are hosted separately on Hugging Face.
+/static/assets/**/*.glb
+
+# Upload caches and Python bytecode
+**/.cache/
+__pycache__/

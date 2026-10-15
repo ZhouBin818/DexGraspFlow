@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="DexGraspFlow: Topology-Aware SE(3) Flow Matching for Cross-Embodiment Dexterous Grasp Generation. MARS Lab, Nanyang Technological University.">
+  <meta name="keywords" content="DexGraspFlow, Dexterous Grasping, Flow Matching, SE(3), Cross-Embodiment, Robot Learning, Kinematic Topology, Diffusion Policy">
+  <meta name="author" content="Bin Zhou, Boyu Ma, Xinyu Zhou, Jiahua Dong, Chuhao Zhou, Yizhou Liu, Hao Wan, Jianfei Yang">
+
+  <title>DexGraspFlow: Topology-Aware SE(3) Flow Matching for Cross-Embodiment Dexterous Grasp Generation</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bulma & Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="static/css/index.css?v=20261014_logo_v7">
+
+  <!-- MathJax for rendering LaTeX math -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Google Model Viewer for 3D Interactive Grasp Visualizer -->
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+</head>
+
+<body>
+
+  <!-- HERO SECTION -->
+  <header class="hero publication-hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop has-text-centered">
+
+        <!-- Publication Title -->
+        <h1 class="title is-1 publication-title">
+          DexGraspFlow: Topology-Aware $\mathrm{SE}(3)$ Flow Matching for Cross-Embodiment Dexterous Grasp Generation
+        </h1>
+
+        <!-- Authors -->
+        <div class="publication-authors">
+          <span class="author-block">Bin Zhou<sup>1</sup>,</span>
+          <span class="author-block">Boyu Ma<sup>1,&dagger;</sup>,</span>
+          <span class="author-block">Xinyu Zhou<sup>1</sup>,</span>
+          <span class="author-block">Jiahua Dong<sup>1</sup>,</span>
+          <span class="author-block">Chuhao Zhou<sup>1</sup>,</span>
+          <span class="author-block">Yizhou Liu<sup>1</sup>,</span>
+          <span class="author-block">Hao Wan<sup>2</sup>,</span>
+          <span class="author-block">Jianfei Yang<sup>1,&dagger;</sup></span>
+        </div>
+
+        <!-- Institutions -->
+        <div class="institution-row">
+          <span class="institution-name"><sup>1</sup>MARS Lab, Nanyang Technological University, Singapore &nbsp;&nbsp;&nbsp;&nbsp; <sup>2</sup>ROKAE Robotics</span>
+          <div class="author-note"><sup>&dagger;</sup>Corresponding authors</div>
+        </div>
+
+        <!-- University & Lab Logos (Below Authors, Above Buttons) -->
+        <div class="logo-header" style="display: flex; justify-content: center; align-items: center; gap: 1.8rem; margin: 1.5rem 0; flex-wrap: nowrap;">
+          <img src="static/images/ntulogo.png" alt="Nanyang Technological University (NTU)" class="ntu-logo" style="height: 48px; width: auto; max-height: 48px;">
+          <span class="logo-divider" style="width: 1px; height: 32px; background-color: rgba(255, 255, 255, 0.25); display: inline-block; flex-shrink: 0;"></span>
+          <img src="static/images/mars_lablogowhite.png" alt="MARS Lab Logo" class="mars-logo" style="height: 52px; width: auto; max-height: 52px;">
+          <span class="logo-divider" style="width: 1px; height: 32px; background-color: rgba(255, 255, 255, 0.25); display: inline-block; flex-shrink: 0;"></span>
+          <img src="static/images/ROKAE.png?v=20261014_v5" alt="ROKAE Robotics Logo" class="rokae-logo" height="44" style="height: 44px; width: auto; max-height: 44px; object-fit: contain;">
+        </div>
+
+        <!-- Publication Links (Pure arXiv & Code) -->
+        <div class="publication-links">
+          <span class="link-block">
+            <a href="javascript:void(0)" class="button" style="cursor: default;" title="Paper coming soon on arXiv">
+              <span class="icon"><i class="ai ai-arxiv"></i></span>
+              <span>arXiv</span>
+            </a>
+          </span>
+          <span class="link-block">
+            <a href="https://github.com/ZhouBin818/DexGraspFlow" class="button" target="_blank" rel="noopener noreferrer">
+              <span class="icon"><i class="fab fa-github"></i></span>
+              <span>Code</span>
+            </a>
+          </span>
+        </div>
+
+        <!-- Key Metrics Banner -->
+        <div class="columns is-mobile is-centered metrics-banner">
+          <div class="column is-one-third-tablet is-4-mobile">
+            <div class="metric-card">
+              <div class="metric-value">95.33%</div>
+              <div class="metric-label">Simulation Success Rate</div>
+            </div>
+          </div>
+          <div class="column is-one-third-tablet is-4-mobile">
+            <div class="metric-card">
+              <div class="metric-value">49% &darr;</div>
+              <div class="metric-label">Latency Reduction (~0.132s)</div>
+            </div>
+          </div>
+          <div class="column is-one-third-tablet is-4-mobile">
+            <div class="metric-card">
+              <div class="metric-value">91.0%</div>
+              <div class="metric-label">Real-Robot Success (91/100)</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main id="main-content">
+
+    <!-- ABSTRACT & OVERVIEW SECTION -->
+    <section class="section is-white">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column is-full">
+            <!-- Project Overview & Real-Robot Demo Video -->
+            <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--border-radius); box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 2.5rem;">
+              <video
+                controls
+                playsinline
+                preload="auto"
+                style="display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: #ffffff;"
+                aria-label="DexGraspFlow project introduction and real-robot demonstrations">
+                <source src="DexGraspFlow_vedio/assets/DexGraspFlow_3min_voice_1080p.mp4?v=20261014_latex_v2#t=0.001" type="video/mp4">
+                Your browser does not support video playback.
+              </video>
+            </div>
+
+            <h2 class="section-title has-text-centered">Abstract</h2>
+            <div class="content" style="text-align: justify; font-size: 1.05rem; line-height: 1.65;">
+              <p>
+                Differences in hand geometry, joint parameterization, and kinematic topology pose challenges for cross-embodiment dexterous grasp generation. However, <span class="keyword-highlight-contrary">spatial relations among links alone are insufficient to fully capture the hand's kinematic topology</span>. We propose <strong>DexGraspFlow</strong>, a conditional link-level $\mathrm{SE}(3)$ flow-matching framework integrating geometric relations and kinematic topology.
+              </p>
+              <p>
+                The framework encodes local object geometry, link geometry, and current poses. A <span class="keyword-highlight-primary">dual-stream DiT</span> models link--link coordination and link--object interaction, while attention biases derived from <span class="keyword-highlight-primary">kinematic-tree distances</span> provide explicit structural information for modeling evolving geometric interactions. The model jointly learns translational and rotational velocity fields, integrates them to generate link poses, and recovers joint configurations through inverse kinematics. Additionally, inference-time <span class="keyword-highlight-contrary">palm-orientation guidance</span> enables controllable grasp generation without retraining.
+              </p>
+              <p>
+                Across three robotic hands and 30 object--hand pairs, DexGraspFlow achieves a <span class="keyword-highlight-primary">95.33% average simulation success rate</span>, with an average generation latency, including inverse kinematics, approximately <span class="keyword-highlight-primary">49% lower</span> than that of a state-of-the-art baseline. Further experiments demonstrate zero-shot adaptability to seven finger-removal variants and palm-orientation control. A model trained on demonstrations for the deployed hand achieves a <span class="keyword-highlight-primary">91% success rate</span> over 100 real-robot grasping trials, supporting its practical applicability.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 1: MOTIVATION -->
+    <section class="section is-soft">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column is-full">
+            <h2 class="section-title">1. Motivation</h2>
+
+            <div class="content">
+              <p>
+                Cross-embodiment dexterous grasp synthesis faces two fundamental challenges:
+              </p>
+
+              <div class="content-box" style="margin-bottom: 2rem; padding: 1.5rem;">
+                <div class="columns is-vcentered">
+                  <div class="column is-6">
+                    <h3 class="subsection-title" style="margin-top: 0 !important; color: var(--primary-color) !important; font-size: 1.25rem !important;">
+                      (a) Kinematic Topology Awareness: Preserving Skeleton Feasibility
+                    </h3>
+                    <p style="font-size: 0.95rem; margin-bottom: 0.75rem; line-height: 1.55;">
+                      <strong>The Problem:</strong> Spatial Euclidean distance ignores the robot's kinematic skeleton. Denoising in unconstrained 3D space causes severe joint hyperextensions, finger crossovers, and kinematic invalidity.
+                    </p>
+                    <p style="font-size: 0.95rem; margin-bottom: 0; line-height: 1.55;">
+                      <strong>Our Solution:</strong> We inject an invariant kinematic hop-count matrix $\mathbf{D}_{\mathrm{topo}}$ as a structural attention bias, constraining continuous flow matching to evolve strictly along the robot's physical kinematic manifold.
+                    </p>
+                  </div>
+                  <div class="column is-6">
+                    <figure class="image-card" style="margin: 0; padding: 0.6rem; background: #ffffff;">
+                      <img src="static/images/topo.png" alt="Kinematic Topology" style="max-height: 240px; width: 100%; object-fit: contain; margin: 0 auto; display: block;">
+                      <figcaption class="figure-caption" style="text-align: center; margin-top: 0.5rem; font-size: 0.85rem; line-height: 1.35;">
+                        <strong>Kinematic Topology & Hop-Count Matrix $\mathbf{D}_{\mathrm{topo}}$.</strong>
+                        Decoupling intrinsic kinematic connectivity from extrinsic spatial pose across heterogeneous hands.
+                      </figcaption>
+                    </figure>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Motivation 2: User-Decided Control -->
+              <div class="content-box" style="padding: 1.5rem;">
+                <div class="columns is-vcentered">
+                  <div class="column is-6">
+                    <h3 class="subsection-title" style="margin-top: 0 !important; color: var(--secondary-color) !important; font-size: 1.25rem !important;">
+                      (b) User-Decided Controllable Generation: Meeting Downstream Task Intent
+                    </h3>
+                    <p style="font-size: 0.95rem; margin-bottom: 0.75rem; line-height: 1.55;">
+                      <strong>The Problem:</strong> Practical robotic manipulation requires grasp poses aligned with downstream task intents (e.g., pouring from the side, bin-picking from above). Existing cross-embodiment models rely on blind random sampling or require expensive model retraining for every new condition.
+                    </p>
+                    <p style="font-size: 0.95rem; margin-bottom: 0; line-height: 1.55;">
+                      <strong>Our Solution:</strong> We formulate training-free inference-time geodesic guidance on $\mathrm{SO}(3)$. Given user-specified approach directions, closed-form rotational velocity corrections $\Delta\mathbf{u}_{t,p}^{\omega} = s(t)\lambda_c\mathbf{R}_{t,p}^{\top}\boldsymbol{\omega}_t^c$ are injected into the predicted velocity field ($\tilde{\mathbf{u}}_{t,p}^{\omega} = \hat{\mathbf{u}}_{t,p}^{\omega} + \Delta\mathbf{u}_{t,p}^{\omega}$) at each integration step, smoothly steering the palm toward target poses while preserving physics-compliant contacts.
+                    </p>
+                  </div>
+                  <div class="column is-6">
+                    <figure class="image-card" style="margin: 0; padding: 0.6rem; background: #ffffff;">
+                      <img src="static/images/palm_orientation_guidance.png" alt="Inference-Time Palm-Orientation Guidance" style="max-height: 240px; width: 100%; object-fit: contain; margin: 0 auto; display: block;">
+                      <figcaption class="figure-caption" style="text-align: center; margin-top: 0.5rem; font-size: 0.85rem; line-height: 1.35;">
+                        <strong>Inference-Time Palm-Orientation Guidance on $\mathrm{SO}(3)$.</strong>
+                        Closed-form geodesic velocity correction $\Delta\mathbf{u}_{t,p}^\omega$ steers the predicted flow $\hat{\mathbf{u}}_{t,p}^\omega$ toward user-specified target orientation $\mathbf{R}_p^c$.
+                      </figcaption>
+                    </figure>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: METHOD OVERVIEW -->
+    <section class="section is-white">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column is-full">
+            <h2 class="section-title">2. Method Overview: Dual-Stream DiT & Geodesic Flow Matching</h2>
+
+            <div class="content">
+              <p>
+                DexGraspFlow formulates multi-link dexterous grasp generation as conditional $\mathrm{SE}(3)$ flow matching on the rigid-body Lie group, parameterized by a geometry- and topology-aware dual-stream Transformer:
+              </p>
+
+              <!-- Framework Overview Figure (Figure 1 from paper) -->
+              <figure class="image-card" style="margin-top: 1.5rem; margin-bottom: 2rem;">
+                <img src="static/images/overview2.png" alt="Overview of DexGraspFlow Framework">
+                <figcaption class="figure-caption">
+                  <strong>Figure 1: Overview of DexGraspFlow.</strong>
+                  <strong>(a) Geometry and state encoding:</strong> Object points and per-link hand point clouds are encoded into object-patch tokens and static link tokens, while the kinematic tree defines the topological distance matrix $\mathbf{D}_{\mathrm{topo}}$. Static link tokens are concatenated with dynamic link-pose features to form link-state tokens.
+                  <strong>(b) Geometry- and topology-aware dual-stream DiT:</strong> Link--object cross-attention and link--link self-attention process state-dependent geometric relation tokens, with kinematic-tree distance biases injected into the link--link stream, to jointly predict translational and rotational velocity fields $v_\theta = (v_\theta^x, v_\theta^\omega)$ with per-link outputs $(\hat{\mathbf{u}}_i^x, \hat{\mathbf{u}}_i^\omega)$.
+                  <strong>(c) Flow to executable grasp:</strong> Continuous velocity fields are numerically integrated from prior distributions to generate target link poses, which are mapped into executable joint configurations via batched inverse kinematics.
+                </figcaption>
+              </figure>
+
+              <div class="columns is-variable is-3" style="margin-bottom: 1rem;">
+                <div class="column is-4">
+                  <div class="content-box" style="height: 100%; padding: 1.25rem 1.35rem; margin-bottom: 0;">
+                    <h3 class="subsection-title" style="margin-top: 0 !important; color: var(--primary-color) !important; font-size: 1.1rem !important; margin-bottom: 0.55rem !important;">
+                      <i class="fas fa-network-wired"></i> 1. Kinematic & Geometric Encoding
+                    </h3>
+                    <p style="font-size: 0.92rem; line-height: 1.5; margin-bottom: 0 !important;">
+                      The target object point cloud is partitioned into local patch tokens, while each robot link is discretized into surface points and encoded into static link tokens. Concatenating with dynamic rigid poses yields link-state tokens $s_{i,t}$.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="column is-4">
+                  <div class="content-box" style="height: 100%; padding: 1.25rem 1.35rem; margin-bottom: 0;">
+                    <h3 class="subsection-title" style="margin-top: 0 !important; color: var(--secondary-color) !important; font-size: 1.1rem !important; margin-bottom: 0.55rem !important;">
+                      <i class="fas fa-arrows-split-up-and-left"></i> 2. Dual-Stream Structural Attention
+                    </h3>
+                    <p style="font-size: 0.92rem; line-height: 1.5; margin-bottom: 0 !important;">
+                      <strong>Link--Link Stream:</strong> Injects topological distance biases $\mathbf{B}_{\mathrm{topo}}$ derived from $\mathbf{D}_{\mathrm{topo}}$ to preserve skeleton feasibility.<br>
+                      <strong>Link--Object Stream:</strong> Injects physical-relation biases $\mathbf{B}_{\mathrm{geom}}$ to accurately model contact geometry.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="column is-4">
+                  <div class="content-box" style="height: 100%; padding: 1.25rem 1.35rem; margin-bottom: 0;">
+                    <h3 class="subsection-title" style="margin-top: 0 !important; color: #2563EB !important; font-size: 1.1rem !important; margin-bottom: 0.55rem !important;">
+                      <i class="fas fa-compass"></i> 3. Geodesic Guidance & Batched IK
+                    </h3>
+                    <p style="font-size: 0.92rem; line-height: 1.5; margin-bottom: 0 !important;">
+                      The network jointly learns translational and angular velocity fields $(v_\theta^x, v_\theta^\omega)$. Training-free geodesic guidance smoothly steers palm orientation during integration, followed by batched GPU Pyroki IK recovery.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dual-Stream Attention Architecture Figure (Figure 2 from paper) -->
+              <figure class="image-card" style="margin-top: 1.5rem;">
+                <img src="static/images/attention2.png" alt="Geometry-Aware Dual-Stream Attention Architecture">
+                <figcaption class="figure-caption">
+                  <strong>Figure 2: Geometry-aware dual-stream attention in the DiT.</strong>
+                  The left branch performs link--link self-attention with physical-relation and topology biases. The right branch performs link--object cross-attention from link queries to object patch tokens with a gated physical-relation bias; topology bias is not used in this branch. In both branches, relation-aware pairwise features are projected to value messages before weighted sum.
+                </figcaption>
+              </figure>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: QUALITATIVE TRAJECTORIES -->
+    <section class="section is-soft">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column is-full">
+            <h2 class="section-title">3. Continuous Flow Trajectories Across Embodiments</h2>
+
+            <div class="content">
+              <p>
+                Visualizing the continuous numerical integration of the learned velocity fields from prior Gaussian distributions ($t=0$) through intermediate flow steps ($t=0.2, 0.5, 0.8, 1.0$), followed by batched GPU inverse kinematics:
+              </p>
+
+              <!-- Allegro Trajectory -->
+              <div class="trajectory-row">
+                <div class="trajectory-row-header">
+                  <div class="trajectory-row-title">
+                    <span class="tag is-danger is-light" style="font-weight: 700;">Allegro Hand</span>
+                    4-finger, 16-DoF &times; YCB Tomato Soup Can
+                  </div>
+                  <span class="has-text-grey" style="font-size: 0.85rem;">Flow Matching Steps &rarr; Executable Configuration</span>
+                </div>
+                <div class="trajectory-step-grid">
+                  <div class="trajectory-step-card">
+                    <img src="static/images/allegro_t00.png" alt="Allegro t=0.0">
+                    <span>$t = 0.0$ (Prior)</span>
+                  </div>
+                  <div class="trajectory-step-card">
+                    <img src="static/images/allegro_t02.png" alt="Allegro t=0.2">
+                    <span>$t = 0.2$</span>
+                  </div>
+                  <div class="trajectory-step-card">
+                    <img src="static/images/allegro_t05.png" alt="Allegro t=0.5">
+                    <span>$t = 0.5$</span>
+                  </div>
+                  <div class="trajectory-step-card">
+                    <img src="static/images/allegro_t08.png" alt="Allegro t=0.8">
+                    <span>$t = 0.8$</span>
+                  </div>
+                  <div class="trajectory-step-card">
+                    <img src="static/images/allegro_t10.png" alt="Allegro t=1.0">
+                    <span>$t = 1.0$ (Link Poses)</span>
+                  </div>
+                  <div class="trajectory-step-card" style="border: 1px solid var(--primary-color); border-radius: 6px; padding: 2px;">
+                    <img src="static/images/allegro_after_ik.png" alt="Allegro After IK">
+                    <span style="color: var(--primary-color); font-weight: 700;">Executed (IK)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Barrett Trajectory -->
+              <div class="trajectory-row">
+                <div class="trajectory-row-header">
+                  <div class="trajectory-row-title">
+                    <span class="tag is-info is-light" style="font-weight: 700;">Barrett Hand</span>
+                    3-finger, 4-DoF &times; ContactDB Door Knob
+                  </div>
+                  <span class="has-text-grey" style="font-size: 0.85rem;">Flow Matching Steps &rarr; Executable Configuration</span>
+                </div>
+                <div class="trajectory-step-grid">
+                  <div class="trajectory-step-card">
+                    <img src="static/images/barrett_t00.png" alt="Barrett t=0.0">
+                    <span>$t = 0.0$ (Prior)</span>
+                  </div>
+                  <div class="trajectory-step-card">
+                    <img src="static/images/barrett_t02.png" alt="Barrett t=0.2">
+                    <span>$t = 0.2$</span>
+                  </div>
+                  <div class="trajectory-step-card">
+                    <img src="static/images/barrett_t05.png" alt="Barrett t=0.5">
+                    <span>$t = 0.5$</span>
+                  </div>
+                  <div class="trajectory-step-card">
+                    <img src="static/images/barrett_t08.png" alt="Barrett t=0.8">
+                    <span>$t = 0.8$</span>
+                  </div>
+                  <div class="trajectory-step-card">
+                    <img src="static/images/barrett_t10.png" alt="Barrett t=1.0">
+                    <span>$t = 1.0$ (Link Poses)</span>
+                  </div>
+                  <div class="trajectory-step-card" style="border: 1px solid var(--secondary-color); border-radius: 6px; padding: 2px;">
+                    <img src="static/images/barrett_after_ik.png" alt="Barrett After IK">
+                    <span style="color: var(--secondary-color); font-weight: 700;">Executed (IK)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ShadowHand Trajectory -->
+              <div class="trajectory-row">
+                <div class="trajectory-row-header">
+                  <div class="trajectory-row-title">
+                    <span class="tag is-primary is-light" style="font-weight: 700;">ShadowHand</span>
+                    5-finger anthropomorphic, 24-DoF &times; ContactDB Apple
+                  </div>
+                  <span class="has-text-grey" style="font-size: 0.85rem;">Flow Matching Steps &rarr; Executable Configuration</span>
+                </div>
+                <div class="trajectory-step-grid">
+                  <div class="trajectory-step-card">
+                    <img src="static/images/shadowhand_t00.png" alt="ShadowHand t=0.0">
+                    <span>$t = 0.0$ (Prior)</span>
+                  </div>
+                  <div class="trajectory-step-card">
+                    <img src="static/images/shadowhand_t02.png" alt="ShadowHand t=0.2">
+                    <span>$t = 0.2$</span>
+                  </div>
+                  <div class="trajectory-step-card">
+                    <img src="static/images/shadowhand_t05.png" alt="ShadowHand t=0.5">
+                    <span>$t = 0.5$</span>
+                  </div>
+                  <div class="trajectory-step-card">
+                    <img src="static/images/shadowhand_t08.png" alt="ShadowHand t=0.8">
+                    <span>$t = 0.8$</span>
+                  </div>
+                  <div class="trajectory-step-card">
+                    <img src="static/images/shadowhand_t10.png" alt="ShadowHand t=1.0">
+                    <span>$t = 1.0$ (Link Poses)</span>
+                  </div>
+                  <div class="trajectory-step-card" style="border: 1px solid #16A34A; border-radius: 6px; padding: 2px;">
+                    <img src="static/images/shadowhand_after_ik.png" alt="ShadowHand After IK">
+                    <span style="color: #16A34A; font-weight: 700;">Executed (IK)</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: INTERACTIVE GRASP VISUALIZER -->
+    <section class="section interactive-visualizer-section" id="interactive-visualizer">
+      <div class="container is-max-desktop">
+
+        <div class="columns is-centered" style="margin-bottom: 2rem;">
+          <div class="column is-full">
+            <h2 class="section-title">4. Interactive 3D Visualizer</h2>
+          </div>
+        </div>
+
+        <!-- Block 1: Unconditioned Grasp Generation -->
+        <div class="visualizer-block">
+          <div class="visualizer-title-container">
+            <h2 class="visualizer-title"><u>Unconditioned Grasp Generation</u></h2>
+          </div>
+
+          <div class="visualizer-row">
+            <!-- Barrett -->
+            <div class="hand-viewer-col">
+              <div class="hand-viewer-box">
+                <model-viewer
+                  id="uncond-viewer1"
+                  data-model-path="uncond/Barrett/contactdb+rubber_duck/0.glb"
+                  alt="Barrett Grasp"
+                  ar camera-controls auto-rotate shadow-intensity="0"
+                  environment-image="neutral" exposure="1.0" tone-mapping="neutral">
+                </model-viewer>
+              </div>
+              <p class="hand-viewer-name">Barrett</p>
+            </div>
+
+            <!-- Allegro -->
+            <div class="hand-viewer-col">
+              <div class="hand-viewer-box">
+                <model-viewer
+                  id="uncond-viewer2"
+                  data-model-path="uncond/Allegro/contactdb+rubber_duck/0.glb"
+                  alt="Allegro Grasp"
+                  ar camera-controls auto-rotate shadow-intensity="0"
+                  environment-image="neutral" exposure="1.0" tone-mapping="neutral">
+                </model-viewer>
+              </div>
+              <p class="hand-viewer-name">Allegro</p>
+            </div>
+
+            <!-- Shadowhand -->
+            <div class="hand-viewer-col">
+              <div class="hand-viewer-box">
+                <model-viewer
+                  id="uncond-viewer3"
+                  data-model-path="uncond/Shadowhand/contactdb+rubber_duck/0.glb"
+                  alt="Shadowhand Grasp"
+                  ar camera-controls auto-rotate shadow-intensity="0"
+                  environment-image="neutral" exposure="1.0" tone-mapping="neutral">
+                </model-viewer>
+              </div>
+              <p class="hand-viewer-name">Shadowhand</p>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="visualizer-control-panel">
+              <label for="uncond-object" class="control-heading">Object Name</label>
+              <select id="uncond-object" class="control-select-input">
+                <option value="contactdb+rubber_duck" selected>contactdb+rubber_duck</option>
+                <option value="contactdb+apple">contactdb+apple</option>
+                <option value="contactdb+camera">contactdb+camera</option>
+                <option value="contactdb+cylinder_medium">contactdb+cylinder_medium</option>
+                <option value="contactdb+door_knob">contactdb+door_knob</option>
+                <option value="contactdb+water_bottle">contactdb+water_bottle</option>
+                <option value="ycb+baseball">ycb+baseball</option>
+                <option value="ycb+pear">ycb+pear</option>
+                <option value="ycb+potted_meat_can">ycb+potted_meat_can</option>
+                <option value="ycb+tomato_soup_can">ycb+tomato_soup_can</option>
+              </select>
+
+              <div class="control-slider-container">
+                <div class="control-slider-title">Grasp ID: <span id="uncond-id-label">0</span></div>
+                <input type="range" id="uncond-id" min="0" max="9" value="0" class="control-range-input">
+              </div>
+
+              <div class="viewer-interaction-hint">
+                <div><i class="fas fa-hand-pointer"></i> Drag to rotate</div>
+                <div>Scroll to zoom</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Block 2: Zero-Shot Topology Generalization (Finger-Removal Hands) -->
+        <div class="visualizer-block">
+          <div class="visualizer-title-container">
+            <h2 class="visualizer-title"><u>Zero-Shot Topology Generalization (Finger-Removal Hands)</u></h2>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 1.5rem; margin-top: 0.85rem; margin-bottom: 0.2rem; flex-wrap: wrap;">
+              <span style="font-size: 0.92rem; font-weight: 700; color: #0284C7; display: inline-flex; align-items: center; gap: 0.45rem;">
+                <i class="fas fa-hand-scissors"></i> Zero-shot adaptability across 7 missing-finger variants without retraining or fine-tuning
+              </span>
+            </div>
+          </div>
+
+          <div class="visualizer-row">
+            <!-- Allegro Missing-Finger Viewer -->
+            <div class="hand-viewer-col zero-hand-viewer-col">
+              <div class="hand-viewer-box zero-hand-viewer-box">
+                <model-viewer
+                  id="zero-viewer-allegro"
+                  data-model-path="zero_shot/allegro_wo_f3/contactdb+rubber_duck/0.glb"
+                  alt="Allegro Missing-Finger Grasp"
+                  ar camera-controls auto-rotate shadow-intensity="0"
+                  environment-image="neutral" exposure="1.0" tone-mapping="neutral">
+                </model-viewer>
+              </div>
+              <p class="hand-viewer-name" style="margin-bottom: 0.35rem;">Allegro Variants</p>
+              <div class="zero-pills-container allegro-pills-single-row" id="allegro-variant-pills">
+                <button type="button" class="zero-pill allegro-pill active" data-variant="allegro_wo_f3" title="Without Index Finger (F3)">w/o Index (I)</button>
+                <button type="button" class="zero-pill allegro-pill" data-variant="allegro_wo_f2" title="Without Middle Finger (F2)">w/o Middle (M)</button>
+                <button type="button" class="zero-pill allegro-pill" data-variant="allegro_wo_f1" title="Without Ring Finger (F1)">w/o Ring (R)</button>
+              </div>
+            </div>
+
+            <!-- ShadowHand Missing-Finger Viewer -->
+            <div class="hand-viewer-col zero-hand-viewer-col">
+              <div class="hand-viewer-box zero-hand-viewer-box">
+                <model-viewer
+                  id="zero-viewer-shadow"
+                  data-model-path="zero_shot/shadowhand_wo_ff/contactdb+rubber_duck/0.glb"
+                  alt="ShadowHand Missing-Finger Grasp"
+                  ar camera-controls auto-rotate shadow-intensity="0"
+                  environment-image="neutral" exposure="1.0" tone-mapping="neutral">
+                </model-viewer>
+              </div>
+              <p class="hand-viewer-name" style="margin-bottom: 0.35rem;">ShadowHand Variants</p>
+              <div class="zero-pills-container shadow-pills-single-row" id="shadow-variant-pills">
+                <button type="button" class="zero-pill shadow-pill active" data-variant="shadowhand_wo_ff" title="Without Forefinger / Index (FF)">w/o Index (I)</button>
+                <button type="button" class="zero-pill shadow-pill" data-variant="shadowhand_wo_mf" title="Without Middle Finger (MF)">w/o Middle (M)</button>
+                <button type="button" class="zero-pill shadow-pill" data-variant="shadowhand_wo_rf" title="Without Ring Finger (RF)">w/o Ring (R)</button>
+                <button type="button" class="zero-pill shadow-pill" data-variant="shadowhand_wo_lf" title="Without Little Finger (LF)">w/o Little (L)</button>
+              </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="visualizer-control-panel">
+              <label for="zero-object" class="control-heading">Object Name</label>
+              <select id="zero-object" class="control-select-input">
+                <option value="contactdb+rubber_duck" selected>contactdb+rubber_duck</option>
+                <option value="contactdb+apple">contactdb+apple</option>
+                <option value="contactdb+camera">contactdb+camera</option>
+                <option value="contactdb+cylinder_medium">contactdb+cylinder_medium</option>
+                <option value="contactdb+door_knob">contactdb+door_knob</option>
+                <option value="contactdb+water_bottle">contactdb+water_bottle</option>
+                <option value="ycb+baseball">ycb+baseball</option>
+                <option value="ycb+pear">ycb+pear</option>
+                <option value="ycb+potted_meat_can">ycb+potted_meat_can</option>
+                <option value="ycb+tomato_soup_can">ycb+tomato_soup_can</option>
+              </select>
+
+              <div class="control-slider-container">
+                <div class="control-slider-title">Grasp ID: <span id="zero-sample-label">0</span></div>
+                <input type="range" id="zero-sample-id" min="0" max="9" value="0" class="control-range-input">
+              </div>
+
+              <div class="viewer-interaction-hint">
+                <div><i class="fas fa-hand-pointer"></i> Drag to rotate</div>
+                <div>Scroll to zoom</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Block 3: Palm-Orientation-Conditioned Grasp Generation -->
+        <div class="visualizer-block">
+          <div class="visualizer-title-container">
+            <h2 class="visualizer-title"><u>Palm-Orientation-Conditioned Grasp Generation</u></h2>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 1.8rem; margin-top: 0.85rem; margin-bottom: 0.2rem; flex-wrap: wrap;">
+              <span style="font-size: 0.92rem; font-weight: 700; color: #1D4ED8; display: inline-flex; align-items: center; gap: 0.45rem;">
+                <span style="display: inline-block; width: 12px; height: 12px; background-color: #2563EB; border-radius: 50%;"></span>
+                Blue Arrow: Target Approach Direction
+              </span>
+              <span style="font-size: 0.92rem; font-weight: 700; color: #B91C1C; display: inline-flex; align-items: center; gap: 0.45rem;">
+                <span style="display: inline-block; width: 12px; height: 12px; background-color: #DC2626; border-radius: 50%;"></span>
+                Red Arrow: Post-IK Actual Palm Direction
+              </span>
+            </div>
+          </div>
+
+          <div class="visualizer-row">
+            <!-- Barrett -->
+            <div class="hand-viewer-col">
+              <div class="hand-viewer-box" style="position: relative;">
+                <span id="cond-poe-badge-1" class="poe-floating-badge">POE: --°</span>
+                <model-viewer
+                  id="cond-viewer1"
+                  data-model-path="cond/Barrett/contactdb+rubber_duck/front_0.glb"
+                  alt="Barrett Grasp"
+                  ar camera-controls auto-rotate shadow-intensity="0"
+                  environment-image="neutral" exposure="1.0" tone-mapping="neutral">
+                </model-viewer>
+              </div>
+              <p class="hand-viewer-name">Barrett</p>
+            </div>
+
+            <!-- Allegro -->
+            <div class="hand-viewer-col">
+              <div class="hand-viewer-box" style="position: relative;">
+                <span id="cond-poe-badge-2" class="poe-floating-badge">POE: --°</span>
+                <model-viewer
+                  id="cond-viewer2"
+                  data-model-path="cond/Allegro/contactdb+rubber_duck/front_0.glb"
+                  alt="Allegro Grasp"
+                  ar camera-controls auto-rotate shadow-intensity="0"
+                  environment-image="neutral" exposure="1.0" tone-mapping="neutral">
+                </model-viewer>
+              </div>
+              <p class="hand-viewer-name">Allegro</p>
+            </div>
+
+            <!-- Shadowhand -->
+            <div class="hand-viewer-col">
+              <div class="hand-viewer-box" style="position: relative;">
+                <span id="cond-poe-badge-3" class="poe-floating-badge">POE: --°</span>
+                <model-viewer
+                  id="cond-viewer3"
+                  data-model-path="cond/Shadowhand/contactdb+rubber_duck/front_0.glb"
+                  alt="Shadowhand Grasp"
+                  ar camera-controls auto-rotate shadow-intensity="0"
+                  environment-image="neutral" exposure="1.0" tone-mapping="neutral">
+                </model-viewer>
+              </div>
+              <p class="hand-viewer-name">Shadowhand</p>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="visualizer-control-panel">
+              <label for="cond-object" class="control-heading">Object Name</label>
+              <select id="cond-object" class="control-select-input">
+                <option value="contactdb+rubber_duck" selected>contactdb+rubber_duck</option>
+                <option value="contactdb+apple">contactdb+apple</option>
+                <option value="contactdb+camera">contactdb+camera</option>
+                <option value="contactdb+cylinder_medium">contactdb+cylinder_medium</option>
+                <option value="contactdb+door_knob">contactdb+door_knob</option>
+                <option value="contactdb+water_bottle">contactdb+water_bottle</option>
+                <option value="ycb+baseball">ycb+baseball</option>
+                <option value="ycb+pear">ycb+pear</option>
+                <option value="ycb+potted_meat_can">ycb+potted_meat_can</option>
+                <option value="ycb+tomato_soup_can">ycb+tomato_soup_can</option>
+              </select>
+
+              <div style="margin-top: 1.15rem; margin-bottom: 0.75rem;">
+                <div style="font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.45rem;">
+                  1. Target Palm Direction
+                </div>
+                <div class="direction-pills-container">
+                  <button type="button" class="dir-pill active" data-dir="front">Front (+X)</button>
+                  <button type="button" class="dir-pill" data-dir="left">Left (+Y)</button>
+                  <button type="button" class="dir-pill" data-dir="up">Up (+Z)</button>
+                  <button type="button" class="dir-pill" data-dir="back">Back (-X)</button>
+                  <button type="button" class="dir-pill" data-dir="right">Right (-Y)</button>
+                  <button type="button" class="dir-pill" data-dir="down">Down (-Z)</button>
+                </div>
+              </div>
+
+              <div class="control-slider-container">
+                <div class="control-slider-title">Grasp ID: <span id="cond-sample-label">0</span></div>
+                <input type="range" id="cond-sample-id" min="0" max="9" value="0" class="control-range-input">
+              </div>
+
+              <div class="viewer-interaction-hint">
+                <div>🔵 Blue: target approach</div>
+                <div>🔴 Red: actual palm approach</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 5: QUANTITATIVE BENCHMARKS -->
+    <section class="section is-white">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column is-full">
+            <h2 class="section-title">5. Experimental Results & Benchmarks</h2>
+
+            <div class="content">
+              <!-- Table 1: Main Benchmark -->
+              <h3 class="subsection-title">Table I: Unconditioned Grasp Generation Across Embodiments</h3>
+              <p class="table-caption-text">Evaluated across 30 held-out object--hand pairs (3,000 simulated trials). Single-sample latency includes both ODE integration and pre-compiled Pyroki IK recovery.</p>
+
+              <div class="table-container">
+                <table class="table is-bordered is-striped">
+                  <thead>
+                    <tr>
+                      <th rowspan="2">Method</th>
+                      <th colspan="4">Success Rate (%) &uarr;</th>
+                      <th colspan="4">Single-Sample Latency (s) &darr;</th>
+                    </tr>
+                    <tr>
+                      <th>Barrett</th>
+                      <th>Allegro</th>
+                      <th>ShadowHand</th>
+                      <th>Avg.</th>
+                      <th>Barrett</th>
+                      <th>Allegro</th>
+                      <th>ShadowHand</th>
+                      <th>Avg.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>DFC (Optimization)</td>
+                      <td>86.30</td>
+                      <td>76.21</td>
+                      <td>58.80</td>
+                      <td>73.77</td>
+                      <td>&gt;1800</td>
+                      <td>&gt;1800</td>
+                      <td>&gt;1800</td>
+                      <td>&gt;1800</td>
+                    </tr>
+                    <tr>
+                      <td>GenDexGrasp</td>
+                      <td>57.40</td>
+                      <td>43.10</td>
+                      <td>42.30</td>
+                      <td>47.60</td>
+                      <td>12.933</td>
+                      <td>18.347</td>
+                      <td>16.540</td>
+                      <td>15.940</td>
+                    </tr>
+                    <tr>
+                      <td>DRO-Grasp</td>
+                      <td>86.60</td>
+                      <td>91.20</td>
+                      <td>81.60</td>
+                      <td>86.47</td>
+                      <td>0.523</td>
+                      <td>0.485</td>
+                      <td>0.856</td>
+                      <td>0.621</td>
+                    </tr>
+                    <tr>
+                      <td>TRO-Grasp</td>
+                      <td><strong>92.40</strong></td>
+                      <td>93.30</td>
+                      <td><strong>98.10</strong></td>
+                      <td>94.60</td>
+                      <td>0.254</td>
+                      <td>0.247</td>
+                      <td>0.269</td>
+                      <td>0.257</td>
+                    </tr>
+                    <tr class="is-selected">
+                      <td>DexGraspFlow (Ours)</td>
+                      <td>92.10</td>
+                      <td><strong>98.40</strong></td>
+                      <td>95.50</td>
+                      <td><strong>95.33</strong></td>
+                      <td><strong>0.126</strong></td>
+                      <td><strong>0.134</strong></td>
+                      <td><strong>0.136</strong></td>
+                      <td><strong>0.132</strong></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Table 2: Zero-shot Finger Removal -->
+              <h3 class="subsection-title" style="margin-top: 3rem !important;">Table II: Zero-Shot Generalization to Topology-Modified (Finger-Removal) Hands</h3>
+              <p class="table-caption-text">Models are trained solely on intact hands and tested directly on 7 amputated variants without fine-tuning. I, M, R, L denote index, middle, ring, and little fingers.</p>
+
+              <div class="table-container">
+                <table class="table is-bordered is-striped">
+                  <thead>
+                    <tr>
+                      <th rowspan="2">Method</th>
+                      <th colspan="3">Allegro (4-Finger)</th>
+                      <th colspan="4">ShadowHand (5-Finger)</th>
+                      <th rowspan="2">Overall Avg.</th>
+                    </tr>
+                    <tr>
+                      <th>w/o Index</th>
+                      <th>w/o Middle</th>
+                      <th>w/o Ring</th>
+                      <th>w/o Index</th>
+                      <th>w/o Middle</th>
+                      <th>w/o Ring</th>
+                      <th>w/o Little</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>DRO-Grasp</td>
+                      <td>53.60</td>
+                      <td>61.40</td>
+                      <td>49.90</td>
+                      <td>47.80</td>
+                      <td>55.40</td>
+                      <td>57.90</td>
+                      <td>45.80</td>
+                      <td>53.11</td>
+                    </tr>
+                    <tr>
+                      <td>TRO-Grasp</td>
+                      <td>11.80</td>
+                      <td>45.80</td>
+                      <td>65.40</td>
+                      <td>2.50</td>
+                      <td>4.00</td>
+                      <td>7.20</td>
+                      <td>6.60</td>
+                      <td>20.47</td>
+                    </tr>
+                    <tr class="is-selected">
+                      <td>DexGraspFlow (Ours)</td>
+                      <td><strong>97.00</strong></td>
+                      <td><strong>75.10</strong></td>
+                      <td><strong>94.50</strong></td>
+                      <td><strong>89.00</strong></td>
+                      <td><strong>90.60</strong></td>
+                      <td><strong>82.80</strong></td>
+                      <td><strong>92.20</strong></td>
+                      <td><strong>88.74</strong></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <figure class="image-card" style="max-width: 580px; margin: 1.5rem auto; padding: 0.85rem;">
+                <img src="static/images/hand_topology_variants_rows.png" alt="Intact and Topology-Modified Hand Embodiments" style="max-height: 235px; width: auto; max-width: 100%; margin: 0 auto; display: block;">
+                <figcaption class="figure-caption" style="text-align: center; font-size: 0.86rem; margin-top: 0.6rem;">
+                  <strong>Intact and 7 topology-modified hand embodiments</strong> evaluated in zero-shot transfer tests. DexGraspFlow maintains 88.74% grasp success without seeing amputated hands during training.
+                </figcaption>
+              </figure>
+
+              <!-- Qualitative Zero-Shot Finger Removal Matrix (Figure 5 from paper) -->
+              <h4 style="font-weight: 700; margin-top: 2rem; margin-bottom: 0.5rem;">
+                Zero-Shot Grasp Synthesis on Amputated Hand Variants Across 4 Held-Out Objects
+              </h4>
+              <p class="table-caption-text">
+                Representative grasps generated on 7 topology-modified hands without retraining. Rows: Baseball, Pear, Potted Meat Can, Water Bottle. Columns: Allegro (w/o Index, w/o Middle, w/o Ring) and ShadowHand (w/o Index, w/o Middle, w/o Ring, w/o Little). Even with missing fingers, DexGraspFlow reorganizes remaining kinematic chains to establish force closure.
+              </p>
+
+              <div class="amputated-matrix-container">
+                <table class="amputated-matrix-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 100px;">Object</th>
+                      <th colspan="3" style="background: #FEE2E2; color: #991B1B;">Allegro Hand (Amputated)</th>
+                      <th colspan="4" style="background: #E0E7FF; color: #3730A3;">ShadowHand (Amputated)</th>
+                    </tr>
+                    <tr>
+                      <th></th>
+                      <th>w/o Index</th>
+                      <th>w/o Middle</th>
+                      <th>w/o Ring</th>
+                      <th>w/o Index</th>
+                      <th>w/o Middle</th>
+                      <th>w/o Ring</th>
+                      <th>w/o Little</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Row 1: Baseball -->
+                    <tr>
+                      <td class="row-label">Baseball</td>
+                      <td><img src="static/images/allegro_wo_f3_baseball_front.png" alt="Allegro w/o I Baseball"></td>
+                      <td><img src="static/images/allegro_wo_f2_baseball_sample2_opposite_stable.png" alt="Allegro w/o M Baseball"></td>
+                      <td><img src="static/images/allegro_wo_f1_baseball_sample1.png" alt="Allegro w/o R Baseball"></td>
+                      <td><img src="static/images/shadowhand_wo_ff_baseball_white_tips.png" alt="Shadow w/o I Baseball"></td>
+                      <td><img src="static/images/shadowhand_wo_mf_baseball_white_tips.png" alt="Shadow w/o M Baseball"></td>
+                      <td><img src="static/images/shadowhand_wo_rf_baseball_white_tips.png" alt="Shadow w/o R Baseball"></td>
+                      <td><img src="static/images/shadowhand_wo_lf_baseball_white_tips.png" alt="Shadow w/o L Baseball"></td>
+                    </tr>
+                    <!-- Row 2: Pear -->
+                    <tr>
+                      <td class="row-label">Pear</td>
+                      <td><img src="static/images/allegro_wo_f3_pear_front.png" alt="Allegro w/o I Pear"></td>
+                      <td><img src="static/images/allegro_wo_f2_pear_original_view.png" alt="Allegro w/o M Pear"></td>
+                      <td><img src="static/images/allegro_wo_f1_pear_sample0.png" alt="Allegro w/o R Pear"></td>
+                      <td><img src="static/images/shadowhand_wo_ff_pear_white_tips.png" alt="Shadow w/o I Pear"></td>
+                      <td><img src="static/images/shadowhand_wo_mf_pear_white_tips.png" alt="Shadow w/o M Pear"></td>
+                      <td><img src="static/images/shadowhand_wo_rf_pear_white_tips.png" alt="Shadow w/o R Pear"></td>
+                      <td><img src="static/images/shadowhand_wo_lf_pear_white_tips.png" alt="Shadow w/o L Pear"></td>
+                    </tr>
+                    <!-- Row 3: Meat Can -->
+                    <tr>
+                      <td class="row-label">Meat Can</td>
+                      <td><img src="static/images/allegro_wo_f3_potted_meat_can_front.png" alt="Allegro w/o I Meat Can"></td>
+                      <td><img src="static/images/allegro_wo_f2_potted_meat_can_sample3_front.png" alt="Allegro w/o M Meat Can"></td>
+                      <td><img src="static/images/allegro_wo_f1_potted_meat_can_sample0.png" alt="Allegro w/o R Meat Can"></td>
+                      <td><img src="static/images/shadowhand_wo_ff_potted_meat_can_white_tips.png" alt="Shadow w/o I Meat Can"></td>
+                      <td><img src="static/images/shadowhand_wo_mf_potted_meat_can_white_tips.png" alt="Shadow w/o M Meat Can"></td>
+                      <td><img src="static/images/shadowhand_wo_rf_potted_meat_can_white_tips_sample2.png" alt="Shadow w/o R Meat Can"></td>
+                      <td><img src="static/images/shadowhand_wo_lf_potted_meat_can_white_tips.png" alt="Shadow w/o L Meat Can"></td>
+                    </tr>
+                    <!-- Row 4: Water Bottle -->
+                    <tr>
+                      <td class="row-label">Water Bottle</td>
+                      <td><img src="static/images/allegro_wo_f3_water_bottle_front.png" alt="Allegro w/o I Water Bottle"></td>
+                      <td><img src="static/images/allegro_wo_f2_water_bottle_opposite_stable.png" alt="Allegro w/o M Water Bottle"></td>
+                      <td><img src="static/images/allegro_wo_f1_water_bottle.png" alt="Allegro w/o R Water Bottle"></td>
+                      <td><img src="static/images/shadowhand_wo_ff_water_bottle_white_tips.png" alt="Shadow w/o I Water Bottle"></td>
+                      <td><img src="static/images/shadowhand_wo_mf_water_bottle_white_tips.png" alt="Shadow w/o M Water Bottle"></td>
+                      <td><img src="static/images/shadowhand_wo_rf_water_bottle_white_tips.png" alt="Shadow w/o R Water Bottle"></td>
+                      <td><img src="static/images/shadowhand_wo_lf_water_bottle_white_tips.png" alt="Shadow w/o L Water Bottle"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Qualitative 6-Direction Conditioned Grasps Gallery (Figure 7 from paper) -->
+              <h4 style="font-weight: 700; margin-top: 3.5rem; margin-bottom: 0.5rem;">
+                Palm-Orientation-Conditioned Grasps on Held-Out Object (Rubber Duck) Across 6 Canonical Directions
+              </h4>
+              <p class="table-caption-text">
+                <em>Figure 7 from paper:</em> Grasps generated across six canonical approach directions (+x: Front, -x: Back, +y: Left, -y: Right, +z: Up, -z: Down) under inference-time rotational guidance without reference poses or retraining. Blue and red arrows inside the translucent object indicate the requested target palm approach and post-IK actual palm approach directions, respectively.
+              </p>
+
+              <!-- Allegro 6 Directions -->
+              <div class="direction-matrix-row">
+                <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.4rem; color: #DC2626;">
+                  Allegro Hand (4-Finger, 16-DoF)
+                </div>
+                <div class="direction-grid">
+                  <div class="direction-cell">
+                    <img src="static/images/af.png" alt="Allegro Front">
+                    <span class="dir-tag">Front (+x)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/ab.png" alt="Allegro Back">
+                    <span class="dir-tag">Back (-x)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/al.png" alt="Allegro Left">
+                    <span class="dir-tag">Left (+y)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/ar.png" alt="Allegro Right">
+                    <span class="dir-tag">Right (-y)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/au.png" alt="Allegro Up">
+                    <span class="dir-tag">Up (+z)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/ad.png" alt="Allegro Down">
+                    <span class="dir-tag">Down (-z)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Barrett 6 Directions -->
+              <div class="direction-matrix-row">
+                <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.4rem; color: #2563EB;">
+                  Barrett Hand (3-Finger, 4-DoF)
+                </div>
+                <div class="direction-grid">
+                  <div class="direction-cell">
+                    <img src="static/images/bf.png" alt="Barrett Front">
+                    <span class="dir-tag">Front (+x)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/bb.png" alt="Barrett Back">
+                    <span class="dir-tag">Back (-x)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/bl.png" alt="Barrett Left">
+                    <span class="dir-tag">Left (+y)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/br.png" alt="Barrett Right">
+                    <span class="dir-tag">Right (-y)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/bu.png" alt="Barrett Up">
+                    <span class="dir-tag">Up (+z)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/bd.png" alt="Barrett Down">
+                    <span class="dir-tag">Down (-z)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ShadowHand 6 Directions -->
+              <div class="direction-matrix-row">
+                <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.4rem; color: #16A34A;">
+                  ShadowHand (5-Finger Anthropomorphic, 24-DoF)
+                </div>
+                <div class="direction-grid">
+                  <div class="direction-cell">
+                    <img src="static/images/sf.png" alt="ShadowHand Front">
+                    <span class="dir-tag">Front (+x)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/sb.png" alt="ShadowHand Back">
+                    <span class="dir-tag">Back (-x)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/sl.png" alt="ShadowHand Left">
+                    <span class="dir-tag">Left (+y)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/sr.png" alt="ShadowHand Right">
+                    <span class="dir-tag">Right (-y)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/su.png" alt="ShadowHand Up">
+                    <span class="dir-tag">Up (+z)</span>
+                  </div>
+                  <div class="direction-cell">
+                    <img src="static/images/sd.png" alt="ShadowHand Down">
+                    <span class="dir-tag">Down (-z)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Table 3: Six-Direction Conditioning -->
+              <h3 class="subsection-title" style="margin-top: 2.5rem !important;">Table III: Six-Direction Conditioned Grasp Generation Results</h3>
+              <p class="table-caption-text">SR and POE denote grasp success rate and final palm-orientation error, respectively. &Delta;SR denotes the success-rate difference in percentage points, while &Delta;POE = POE<sub>TRO</sub> - POE<sub>Ours</sub> denotes the absolute POE reduction in degrees; positive values favor DexGraspFlow.</p>
+
+              <div class="table-container">
+                <table class="table is-bordered is-striped">
+                  <thead>
+                    <tr>
+                      <th rowspan="2" style="vertical-align: middle;">Setting</th>
+                      <th colspan="3">Success Rate (%)</th>
+                      <th colspan="3">Palm-Orientation Error (POE, deg.) &darr;</th>
+                    </tr>
+                    <tr>
+                      <th>TRO</th>
+                      <th>Ours</th>
+                      <th>&Delta;SR &uarr;</th>
+                      <th>TRO</th>
+                      <th>Ours</th>
+                      <th>&Delta;POE (Drop) &uarr;</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Hand-wise results header -->
+                    <tr style="background: #F8FAFC; font-weight: 700;">
+                      <td colspan="7" style="color: #475569; text-align: left; padding-left: 1rem;">
+                        <em>Hand-wise results</em>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Allegro Hand</td>
+                      <td>80.42</td>
+                      <td><strong>95.17</strong></td>
+                      <td><span class="tag is-success is-light">+14.75</span></td>
+                      <td>38.25</td>
+                      <td><strong>15.18</strong></td>
+                      <td><strong>+23.07&deg;</strong></td>
+                    </tr>
+                    <tr>
+                      <td>Barrett Hand</td>
+                      <td>77.17</td>
+                      <td><strong>83.50</strong></td>
+                      <td><span class="tag is-success is-light">+6.33</span></td>
+                      <td>41.40</td>
+                      <td><strong>9.12</strong></td>
+                      <td><strong>+32.28&deg;</strong></td>
+                    </tr>
+                    <tr>
+                      <td>ShadowHand</td>
+                      <td>63.67</td>
+                      <td><strong>81.42</strong></td>
+                      <td><span class="tag is-success is-light">+17.75</span></td>
+                      <td>35.51</td>
+                      <td><strong>17.46</strong></td>
+                      <td><strong>+18.05&deg;</strong></td>
+                    </tr>
+                    <tr class="is-selected">
+                      <td>Average</td>
+                      <td>73.75</td>
+                      <td><strong>86.69</strong></td>
+                      <td><span class="tag is-danger is-light"><strong>+12.94</strong></span></td>
+                      <td>38.38</td>
+                      <td><strong>13.92</strong></td>
+                      <td><strong>+24.46&deg;</strong></td>
+                    </tr>
+
+                    <!-- Direction-wise results header -->
+                    <tr style="background: #F8FAFC; font-weight: 700;">
+                      <td colspan="7" style="color: #475569; text-align: left; padding-left: 1rem;">
+                        <em>Direction-wise results averaged across hand embodiments</em>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Front (+x)</td>
+                      <td>71.33</td>
+                      <td><strong>90.50</strong></td>
+                      <td><span class="tag is-success is-light">+19.17</span></td>
+                      <td>39.44</td>
+                      <td><strong>13.95</strong></td>
+                      <td><strong>+25.49&deg;</strong></td>
+                    </tr>
+                    <tr>
+                      <td>Back (-x)</td>
+                      <td>73.67</td>
+                      <td><strong>82.67</strong></td>
+                      <td><span class="tag is-success is-light">+9.00</span></td>
+                      <td>37.95</td>
+                      <td><strong>14.16</strong></td>
+                      <td><strong>+23.79&deg;</strong></td>
+                    </tr>
+                    <tr>
+                      <td>Left (+y)</td>
+                      <td>73.67</td>
+                      <td><strong>88.00</strong></td>
+                      <td><span class="tag is-success is-light">+14.33</span></td>
+                      <td>37.88</td>
+                      <td><strong>14.24</strong></td>
+                      <td><strong>+23.64&deg;</strong></td>
+                    </tr>
+                    <tr>
+                      <td>Right (-y)</td>
+                      <td>75.50</td>
+                      <td><strong>83.17</strong></td>
+                      <td><span class="tag is-success is-light">+7.67</span></td>
+                      <td>37.66</td>
+                      <td><strong>14.64</strong></td>
+                      <td><strong>+23.02&deg;</strong></td>
+                    </tr>
+                    <tr>
+                      <td>Up (+z)</td>
+                      <td>80.00</td>
+                      <td><strong>91.50</strong></td>
+                      <td><span class="tag is-success is-light">+11.50</span></td>
+                      <td>32.37</td>
+                      <td><strong>13.24</strong></td>
+                      <td><strong>+19.13&deg;</strong></td>
+                    </tr>
+                    <tr>
+                      <td>Down (-z)</td>
+                      <td>68.33</td>
+                      <td><strong>84.33</strong></td>
+                      <td><span class="tag is-success is-light">+16.00</span></td>
+                      <td>45.00</td>
+                      <td><strong>13.29</strong></td>
+                      <td><strong>+31.71&deg;</strong></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="notification is-light" style="background-color: #F8FAFC; border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.1rem 1.4rem; margin-top: 2.8rem; margin-bottom: 0.5rem;">
+                <p style="margin: 0; font-size: 0.95rem; color: var(--text-secondary); line-height: 1.55;">
+                  <i class="fas fa-microscope" style="color: var(--primary-color); margin-right: 0.5rem;"></i>
+                  <strong>Ablation Studies & In-Depth Analysis:</strong> Comprehensive empirical ablations on structural attention biases, ODE integration dynamics, and geodesic guidance scale sensitivity are detailed in the paper.
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: REAL-WORLD EXPERIMENTS & VIDEO SHOWCASE -->
+    <section class="section is-soft" id="real-robot-section">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column is-full">
+            <h2 class="section-title">6. Real-World Robot Deployment (91% Success Rate)</h2>
+
+            <div class="content">
+              <p>
+                To evaluate real-world feasibility, DexGraspFlow was deployed on a physical robotic workstation consisting of a <strong>ROKAE industrial manipulator</strong>, a <strong>Linker Hand L20Lite dexterous five-finger hand</strong>, and an <strong>Intel RealSense D435i camera</strong>. The system evaluated zero-shot grasp transfer across 10 physical objects never observed during training.
+              </p>
+
+              <!-- Compact Setup Figures (User requested smaller display) -->
+              <div class="compact-setup-grid">
+                <div class="compact-setup-card">
+                  <img src="static/images/SETUP.jpg" alt="Robot Workspace Overview">
+                  <div class="caption-label">Workspace Setup (ROKAE + RealSense + Worktable)</div>
+                </div>
+                <div class="compact-setup-card">
+                  <img src="static/images/SETUP2.jpg" alt="Close-up Hand Interaction">
+                  <div class="caption-label">Close-up Hand Interaction (Linker Hand L20Lite)</div>
+                </div>
+              </div>
+
+              <!-- Real Robot Experimental Result Summary -->
+              <div class="callout callout-insight" style="margin-top: 1.5rem;">
+                <strong>100 Physical Trials Benchmark:</strong>
+                Across 10 unseen daily objects (10 independent trials per object, total 100 trials), DexGraspFlow achieved an overall success rate of <strong>91/100 (91.0%)</strong>, firmly validating its zero-shot physical transfer and robust contact synthesis.
+              </div>
+
+              <!-- Table VII: Real-Robot Results on 10 Objects (Table 6 in paper) -->
+              <h3 class="subsection-title" style="margin-top: 2.2rem !important;">Table VII: Real-Robot Grasping Results Across 10 Unseen Physical Objects</h3>
+              <p class="table-caption-text">Zero-shot physical grasping trials on Linker Hand L20Lite across 10 unmodeled everyday objects (10 independent trials each).</p>
+
+              <div class="table-container" style="max-width: 660px; margin: 1rem auto 2.2rem;">
+                <table class="table is-bordered is-striped">
+                  <thead>
+                    <tr>
+                      <th>Object</th>
+                      <th>Success / Trials</th>
+                      <th>Object</th>
+                      <th>Success / Trials</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Can</td>
+                      <td>7 / 10</td>
+                      <td>Coil</td>
+                      <td>9 / 10</td>
+                    </tr>
+                    <tr>
+                      <td>Toy</td>
+                      <td><strong>10 / 10</strong></td>
+                      <td>Foam Box Lid</td>
+                      <td><strong>10 / 10</strong></td>
+                    </tr>
+                    <tr>
+                      <td>McCafe</td>
+                      <td><strong>10 / 10</strong></td>
+                      <td>Orange</td>
+                      <td>9 / 10</td>
+                    </tr>
+                    <tr>
+                      <td>Packaging Box</td>
+                      <td><strong>10 / 10</strong></td>
+                      <td>Pill Bottle</td>
+                      <td><strong>10 / 10</strong></td>
+                    </tr>
+                    <tr>
+                      <td>Pomegranate</td>
+                      <td>8 / 10</td>
+                      <td>Red Tape</td>
+                      <td>8 / 10</td>
+                    </tr>
+                    <tr class="is-selected">
+                      <td colspan="2"><strong>Overall Real-Robot Success</strong></td>
+                      <td colspan="2"><strong>91 / 100 (91.0%)</strong></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- 10 Real-World Objects Video Gallery -->
+              <h3 class="subsection-title" style="margin-top: 2.5rem !important;">
+                <i class="fas fa-video" style="color: var(--primary-color);"></i> Real-Robot Grasping Trials on 10 Unseen Physical Objects
+              </h3>
+              <p style="font-size: 0.95rem; line-height: 1.6; margin-bottom: 0.8rem;">
+                To rigorously evaluate zero-shot physical transfer, the test benchmark features <strong>10 diverse physical objects</strong> unseen during model training. These objects cover a wide spectrum of geometric topologies and challenging contact mechanics, including thick lightweight foam slabs (<strong>Foam Box Lid</strong>), delicate annular/spiral contours (<strong>Coil</strong>, <strong>Red Tape</strong>), low-friction smooth metallic cylinders (<strong>Can</strong>), deformable compliant shells (<strong>McCafe</strong>, <strong>Toy</strong>), bulky volumetric cuboids (<strong>Packaging Box</strong>), and heavy asymmetric natural fruits (<strong>Orange</strong>, <strong>Pomegranate</strong>).
+              </p>
+              <p class="table-caption-text" style="margin-bottom: 1.2rem;">
+                <strong>Interactive Video Gallery:</strong> Live physical trials using the ROKAE manipulator and Linker Hand L20Lite (91/100 overall success). Click any video to play.
+              </p>
+
+              <div class="real-robot-video-grid">
+
+                <!-- 1. Can -->
+                <div class="video-card">
+                  <div class="video-card-header">
+                    <div class="video-card-title-group">
+                      <img src="static/images/can.png" alt="Can" class="video-card-thumb">
+                      <div>
+                        <div class="video-card-title">Can</div>
+                        <div class="video-card-sub">Low-Friction Cylinder</div>
+                      </div>
+                    </div>
+                    <span class="video-card-badge is-warning">7/10</span>
+                  </div>
+                  <div class="video-card-player">
+                    <video loop muted playsinline controls preload="none" poster="static/images/can.png">
+                      <source src="video/cut/can/can.mp4" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="video-card-footer">
+                    Stable multi-finger enclosure resisting slip on smooth aluminum shell.
+                  </div>
+                </div>
+
+                <!-- 2. Coil -->
+                <div class="video-card">
+                  <div class="video-card-header">
+                    <div class="video-card-title-group">
+                      <img src="static/images/coil.png" alt="Coil" class="video-card-thumb">
+                      <div>
+                        <div class="video-card-title">Coil</div>
+                        <div class="video-card-sub">Thin Spiral Contour</div>
+                      </div>
+                    </div>
+                    <span class="video-card-badge">9/10</span>
+                  </div>
+                  <div class="video-card-player">
+                    <video loop muted playsinline controls preload="none" poster="static/images/coil.png">
+                      <source src="video/cut/coil/coil.mp4" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="video-card-footer">
+                    Precision fingertip pinch on delicate curved contours.
+                  </div>
+                </div>
+
+                <!-- 3. Toy -->
+                <div class="video-card">
+                  <div class="video-card-header">
+                    <div class="video-card-title-group">
+                      <img src="static/images/doll.png" alt="Toy" class="video-card-thumb">
+                      <div>
+                        <div class="video-card-title">Toy</div>
+                        <div class="video-card-sub">Compliant Soft Body</div>
+                      </div>
+                    </div>
+                    <span class="video-card-badge">10/10</span>
+                  </div>
+                  <div class="video-card-player">
+                    <video loop muted playsinline controls preload="none" poster="static/images/doll.png">
+                      <source src="video/cut/doll/doll.mp4" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="video-card-footer">
+                    Compliant multi-finger adaptive wrap conforming to non-rigid contours.
+                  </div>
+                </div>
+
+                <!-- 4. Foam Box Lid -->
+                <div class="video-card">
+                  <div class="video-card-header">
+                    <div class="video-card-title-group">
+                      <img src="static/images/foam_box_lid.png" alt="Foam Box Lid" class="video-card-thumb">
+                      <div>
+                        <div class="video-card-title">Foam Box Lid</div>
+                        <div class="video-card-sub">Thick Foam Slab</div>
+                      </div>
+                    </div>
+                    <span class="video-card-badge">10/10</span>
+                  </div>
+                  <div class="video-card-player">
+                    <video loop muted playsinline controls preload="none" poster="static/images/foam_box_lid.png">
+                      <source src="video/cut/foam_box_lid/foam_box_lid.mp4" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="video-card-footer">
+                    Stable opposed grasp across compliant, thick foam sidewalls.
+                  </div>
+                </div>
+
+                <!-- 5. McCafe -->
+                <div class="video-card">
+                  <div class="video-card-header">
+                    <div class="video-card-title-group">
+                      <img src="static/images/mccafe.png" alt="McCafe" class="video-card-thumb">
+                      <div>
+                        <div class="video-card-title">McCafe</div>
+                        <div class="video-card-sub">Tapered Conical Shell</div>
+                      </div>
+                    </div>
+                    <span class="video-card-badge">10/10</span>
+                  </div>
+                  <div class="video-card-player">
+                    <video loop muted playsinline controls preload="none" poster="static/images/mccafe.png">
+                      <source src="video/cut/mccafe/mccafe.mp4" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="video-card-footer">
+                    Conical power grasp with balanced friction on paper wall.
+                  </div>
+                </div>
+
+                <!-- 6. Orange -->
+                <div class="video-card">
+                  <div class="video-card-header">
+                    <div class="video-card-title-group">
+                      <img src="static/images/orange.png" alt="Orange" class="video-card-thumb">
+                      <div>
+                        <div class="video-card-title">Orange</div>
+                        <div class="video-card-sub">Smooth Spherical Fruit</div>
+                      </div>
+                    </div>
+                    <span class="video-card-badge">9/10</span>
+                  </div>
+                  <div class="video-card-player">
+                    <video loop muted playsinline controls preload="none" poster="static/images/orange.png">
+                      <source src="video/cut/orange/orange.mp4" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="video-card-footer">
+                    Equilateral five-finger spherical cage securing rolling sphere.
+                  </div>
+                </div>
+
+                <!-- 7. Packaging Box -->
+                <div class="video-card">
+                  <div class="video-card-header">
+                    <div class="video-card-title-group">
+                      <img src="static/images/packaging_box.png" alt="Packaging Box" class="video-card-thumb">
+                      <div>
+                        <div class="video-card-title">Packaging Box</div>
+                        <div class="video-card-sub">Volumetric Cuboid</div>
+                      </div>
+                    </div>
+                    <span class="video-card-badge">10/10</span>
+                  </div>
+                  <div class="video-card-player">
+                    <video loop muted playsinline controls preload="none" poster="static/images/packaging_box.png">
+                      <source src="video/cut/packaging_box/packaging_box.mp4" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="video-card-footer">
+                    Wide-span opposed grasp across bulky planar faces.
+                  </div>
+                </div>
+
+                <!-- 8. Pill Bottle -->
+                <div class="video-card">
+                  <div class="video-card-header">
+                    <div class="video-card-title-group">
+                      <img src="static/images/pill_bottle.png" alt="Pill Bottle" class="video-card-thumb">
+                      <div>
+                        <div class="video-card-title">Pill Bottle</div>
+                        <div class="video-card-sub">Rigid Plastic Cylinder</div>
+                      </div>
+                    </div>
+                    <span class="video-card-badge">10/10</span>
+                  </div>
+                  <div class="video-card-player">
+                    <video loop muted playsinline controls preload="none" poster="static/images/pill_bottle.png">
+                      <source src="video/cut/pill_bottle/pill_bottle.mp4" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="video-card-footer">
+                    Precision lateral pinch and rigid vertical lift.
+                  </div>
+                </div>
+
+                <!-- 9. Pomegranate -->
+                <div class="video-card">
+                  <div class="video-card-header">
+                    <div class="video-card-title-group">
+                      <img src="static/images/pomegranate.png" alt="Pomegranate" class="video-card-thumb">
+                      <div>
+                        <div class="video-card-title">Pomegranate</div>
+                        <div class="video-card-sub">Asymmetric Curved Fruit</div>
+                      </div>
+                    </div>
+                    <span class="video-card-badge">8/10</span>
+                  </div>
+                  <div class="video-card-player">
+                    <video loop muted playsinline controls preload="none" poster="static/images/pomegranate.png">
+                      <source src="video/cut/pomegranate/pomegranate.mp4" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="video-card-footer">
+                    Adaptive force-closure grip resisting mass eccentricity.
+                  </div>
+                </div>
+
+                <!-- 10. Red Tape -->
+                <div class="video-card">
+                  <div class="video-card-header">
+                    <div class="video-card-title-group">
+                      <img src="static/images/red_tape.png" alt="Red Tape" class="video-card-thumb">
+                      <div>
+                        <div class="video-card-title">Red Tape</div>
+                        <div class="video-card-sub">Annular Ring Geometry</div>
+                      </div>
+                    </div>
+                    <span class="video-card-badge">8/10</span>
+                  </div>
+                  <div class="video-card-player">
+                    <video loop muted playsinline controls preload="none" poster="static/images/red_tape.png">
+                      <source src="video/cut/red_tape/red_tape.mp4" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="video-card-footer">
+                    Dual-finger inner rim hook and exterior palm support.
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: BIBTEX -->
+    <section class="section is-white" id="BibTeX">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column is-full">
+            <h2 class="section-title">BibTeX</h2>
+
+            <div class="bibtex-box">
+              <button class="copy-button" onclick="copyBibTeX()">
+                <i class="far fa-copy"></i> Copy
+              </button>
+              <pre><code id="bibtex-code">@article{zhou2026dexgraspflow,
+  title={DexGraspFlow: Topology-Aware SE(3) Flow Matching for Cross-Embodiment Dexterous Grasp Generation},
+  author={Zhou, Bin and Ma, Boyu and Zhou, Xinyu and Dong, Jiahua and Zhou, Chuhao and Liu, Yizhou and Wan, Hao and Yang, Jianfei},
+  journal={arXiv preprint},
+  year={2026}
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- CLEAN FOOTER (Without third-party template claims) -->
+  <footer class="clean-footer">
+    <div class="container is-max-desktop">
+      <p>
+        &copy; 2026 <strong>DexGraspFlow</strong>. MARS Lab, Nanyang Technological University &amp; ROKAE Robotics. All Rights Reserved.
+      </p>
+    </div>
+  </footer>
+
+  <!-- External Logic Script -->
+  <script src="static/js/asset-config.js"></script>
+  <script src="static/js/index.js"></script>
+</body>
+</html>
