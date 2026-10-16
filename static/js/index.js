@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("cond-poe-badge-3")
   ];
 
-  fetch("./static/assets/cond/poe_metadata.json")
+  fetch("./static/assets/cond/poe_metadata.json?v=20261016-refined")
     .then((res) => res.json())
     .then((data) => {
       condPoeMetadata = data;
@@ -115,7 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function resolveCondModelPath(hand, obj, dir, sample) {
-    return modelURL(`cond/${hand}/${obj}/${dir}_${sample}.glb`);
+    const replacement = window.DEXGRASPFLOW_CONDITIONED_REPLACEMENTS?.[hand]?.[obj]?.[dir]?.[sample];
+    return modelURL(replacement || `cond/${hand}/${obj}/${dir}_${sample}.glb`);
   }
 
   function updateCondViewers() {
