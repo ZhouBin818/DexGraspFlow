@@ -82,6 +82,25 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentCondDir = "front";
   let currentCondSample = 0;
   let condPoeMetadata = null;
+  const conditionedSelection = window.DEXGRASPFLOW_CONDITIONED_SELECTION || {};
+  function conditionedSourceSample(hand) {
+    const selected = conditionedSelection[hand]?.[condObject.value]?.[currentCondDir];
+    return selected ? selected[currentCondSample] : currentCondSample;
+  }
+
+  function syncConditionedSampleRange() {
+    if (!condObject || !condSampleSlider) return;
+    const counts = ['Barrett', 'Allegro', 'Shadowhand'].map((hand) =>
+      conditionedSelection[hand]?.[condObject.value]?.[currentCondDir]?.length ?? 10);
+    const count = Math.min(...counts);
+    currentCondSample = Math.min(currentCondSample, count - 1);
+    condSampleSlider.max = String(count - 1);
+    condSampleSlider.value = String(currentCondSample);
+    condSampleSlider.disabled = count === 1;
+    const countLabel = document.getElementById('cond-sample-count');
+    if (countLabel) countLabel.textContent = String(count);
+  }
+
   const poeBadges = [
     document.getElementById("cond-poe-badge-1"),
     document.getElementById("cond-poe-badge-2"),
@@ -103,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hands.forEach((hand, idx) => {
       const badge = poeBadges[idx];
       if (badge) {
-        const val = condPoeMetadata[hand]?.[obj]?.[currentCondDir]?.[currentCondSample];
+        const val = condPoeMetadata[hand]?.[obj]?.[currentCondDir]?.[conditionedSourceSample(hand)];
         if (val !== undefined) {
           badge.textContent = `POE: ${val.toFixed(1)}°`;
           badge.style.display = "inline-block";
@@ -124,12 +143,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const hands = ['Barrett', 'Allegro', 'Shadowhand'];
     hands.forEach((hand, idx) => {
       if (condViewers[idx]) {
-        condViewers[idx].src = resolveCondModelPath(hand, obj, currentCondDir, currentCondSample);
+        condViewers[idx].src = resolveCondModelPath(hand, obj, currentCondDir, conditionedSourceSample(hand));
       }
     });
   }
 
   function updateCond() {
+    syncConditionedSampleRange();
     // 1. 更新方向按钮高亮
     dirPills.forEach((pill) => {
       if (pill.getAttribute("data-dir") === currentCondDir) {
@@ -170,11 +190,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 切换物体：保持当前选中的方向与样本
   if (condObject) {
-    condObject.addEventListener("change", () => {
-      updateCondViewers();
-      updateCondPoe();
-    });
+    condObject.addEventListener("change", updateCond);
   }
+
+  updateCond();
 
   // --- Block 3: Zero-Shot Topology Generalization (Finger-Removal Hands) ---
   const zeroViewerAllegro = document.getElementById("zero-viewer-allegro");
