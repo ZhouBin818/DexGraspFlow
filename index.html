@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
-  <link rel="stylesheet" href="static/css/index.css?v=20261014_logo_v7">
+  <link rel="stylesheet" href="static/css/index.css?v=20261017_authors_v2">
 
   <!-- MathJax for rendering LaTeX math -->
   <script>
@@ -116,27 +116,22 @@
               </video>
             </div>
 
-            <div style="background: var(--band-dark); border-radius: var(--border-radius); padding: 0.5rem 1.5rem 1rem; margin-bottom: 2.5rem;">
-              <!-- Key Metrics Banner -->
-              <div class="columns is-mobile is-centered metrics-banner">
-                <div class="column is-one-third-tablet is-4-mobile">
-                  <div class="metric-card">
-                    <div class="metric-value">95.33%</div>
-                    <div class="metric-label">Simulation Success Rate</div>
-                  </div>
-                </div>
-                <div class="column is-one-third-tablet is-4-mobile">
-                  <div class="metric-card">
-                    <div class="metric-value">49% &darr;</div>
-                    <div class="metric-label">Latency Reduction (~0.132s)</div>
-                  </div>
-                </div>
-                <div class="column is-one-third-tablet is-4-mobile">
-                  <div class="metric-card">
-                    <div class="metric-value">91.0%</div>
-                    <div class="metric-label">Real-Robot Success (91/100)</div>
-                  </div>
-                </div>
+            <!-- Key results below the overview video -->
+            <div class="metrics-banner" role="group" aria-label="Key results">
+              <div class="metric-card">
+                <div class="metric-value">95.33<span>%</span></div>
+                <div class="metric-label">Simulation Success Rate</div>
+                <div class="metric-detail">Across three robotic hands</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">49<span>% &darr;</span></div>
+                <div class="metric-label">Latency Reduction</div>
+                <div class="metric-detail">~0.132 s per grasp</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">91.0<span>%</span></div>
+                <div class="metric-label">Real-Robot Success</div>
+                <div class="metric-detail">91 / 100 real-world trials</div>
               </div>
             </div>
 
